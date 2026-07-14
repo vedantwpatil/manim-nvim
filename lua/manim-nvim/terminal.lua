@@ -3,10 +3,15 @@
 ---@field chan_id number|nil Channel ID for sending commands
 ---@field win_id number|nil Window ID of terminal
 
+---@class EmbedState
+---@field bufnr number|nil Buffer where self.embed() was inserted
+---@field lnum number|nil 0-indexed line number of the inserted self.embed()
+
 ---@class SessionState
 ---@field terminal TerminalState Terminal state
 ---@field scene_name string|nil Current scene name
 ---@field file_path string|nil Current file path
+---@field embed EmbedState Embed tracking state
 
 local M = {}
 
@@ -21,7 +26,39 @@ local state = {
 	},
 	scene_name = nil,
 	file_path = nil,
+	embed = { bufnr = nil, lnum = nil },
 }
+
+---Remove the inserted self.embed() line and save the buffer
+local function remove_embed()
+	if state.embed.bufnr and state.embed.lnum ~= nil
+		and vim.api.nvim_buf_is_valid(state.embed.bufnr) then
+		vim.api.nvim_buf_set_lines(
+			state.embed.bufnr, state.embed.lnum, state.embed.lnum + 1, false, {}
+		)
+		vim.api.nvim_buf_call(state.embed.bufnr, function()
+			vim.cmd("silent! write")
+		end)
+	end
+	state.embed.bufnr = nil
+	state.embed.lnum = nil
+end
+
+---Insert "self.embed()" (matching the indentation of the line at lnum) into
+---bufnr just before lnum, save the buffer, and record it as the current
+---embed marker.
+---@param bufnr number
+---@param lnum number 0-indexed line to insert before
+local function insert_embed_marker(bufnr, lnum)
+	local cur_line = vim.api.nvim_buf_get_lines(bufnr, lnum, lnum + 1, false)[1] or ""
+	local indent = cur_line:match("^(%s*)") or ""
+	vim.api.nvim_buf_set_lines(bufnr, lnum, lnum, false, { indent .. "self.embed()" })
+	vim.api.nvim_buf_call(bufnr, function()
+		vim.cmd("silent! write")
+	end)
+	state.embed.bufnr = bufnr
+	state.embed.lnum = lnum
+end
 
 ---Check if terminal session is active
 ---@return boolean
@@ -87,6 +124,7 @@ function M.start_session(file, scene)
 	state.terminal.chan_id = vim.fn.termopen(cmd, {
 		on_exit = function(_, exit_code, _)
 			vim.schedule(function()
+				remove_embed()
 				if exit_code ~= 0 then
 					vim.notify("[manim-nvim] Session exited with code: " .. exit_code, vim.log.levels.WARN)
 				end
@@ -110,6 +148,7 @@ function M.start_session(file, scene)
 		buffer = state.terminal.bufnr,
 		once = true,
 		callback = function()
+			remove_embed()
 			state.terminal.chan_id = nil
 			state.terminal.bufnr = nil
 			state.terminal.win_id = nil
@@ -162,11 +201,22 @@ function M.restart_session()
 
 	local scene = state.scene_name
 	local file = state.file_path
+	-- Capture the embed marker location (if any) before stop_session()'s
+	-- BufWipeout handler clears state.embed and strips the line.
+	local embed_bufnr, embed_lnum = state.embed.bufnr, state.embed.lnum
 
 	M.stop_session()
 
 	-- Small delay to ensure cleanup
 	vim.defer_fn(function()
+		if embed_bufnr and embed_lnum ~= nil and vim.api.nvim_buf_is_valid(embed_bufnr) then
+			insert_embed_marker(embed_bufnr, embed_lnum)
+		elseif embed_bufnr then
+			vim.notify(
+				"[manim-nvim] Could not restore self.embed() marker (buffer no longer valid)",
+				vim.log.levels.WARN
+			)
+		end
 		M.start_session(file, scene)
 	end, 100)
 
@@ -236,6 +286,36 @@ function M.run_selection()
 
 	local text = table.concat(lines, "\n")
 	return M.send_to_terminal(text)
+end
+
+---Insert self.embed() before the cursor line, save, and start a manimgl session.
+---If a session is already active, it is stopped first and the new marker/session
+---are deferred until after cleanup completes — mirroring restart_session()'s
+---delay — since the old job's on_exit fires asynchronously and would otherwise
+---clobber the new session's state or strip the newly-inserted marker.
+---On session exit (or terminal buffer wipeout) the inserted line is automatically removed.
+---@param file string? File path (defaults to current buffer)
+---@param scene string? Scene name (prompts if not provided)
+---@return boolean success
+function M.embed_and_start(file, scene)
+	local embed_buf = vim.api.nvim_get_current_buf()
+	local lnum = vim.api.nvim_win_get_cursor(0)[1] - 1 -- 0-indexed; insert BEFORE cursor line
+	file = file or vim.api.nvim_buf_get_name(embed_buf)
+
+	if state.terminal.chan_id then
+		M.stop_session()
+		-- Small delay to let the old job's async on_exit finish (it resets
+		-- state.terminal fields and calls remove_embed() on whatever marker
+		-- is current) before we record the new marker and start a new session.
+		vim.defer_fn(function()
+			insert_embed_marker(embed_buf, lnum)
+			M.start_session(file, scene)
+		end, 100)
+		return true
+	end
+
+	insert_embed_marker(embed_buf, lnum)
+	return M.start_session(file, scene)
 end
 
 return M

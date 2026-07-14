@@ -77,6 +77,7 @@ require('manim-nvim').setup({
         focus_terminal = '<leader>mf',
         start_watcher = '<leader>mw',
         stop_watcher = '<leader>ms',
+        embed = '<leader>me',          -- insert self.embed() and start session
     },
 })
 ```
@@ -92,31 +93,41 @@ require('manim-nvim').setup({
 5. Select code in visual mode and press `<leader>mr` to run it
 6. Run `:ManimStop` to end the session
 
+### Embed Workflow
+
+1. Place the cursor on the line where you want to drop into an interactive `self.embed()` shell
+2. Run `:ManimEmbed [scene]` (or press `<leader>me`)
+3. manim-nvim inserts `self.embed()` above the cursor line, saves the file, and starts the manimgl session
+4. When you stop the session (`:ManimStop`), close the terminal buffer, or the process exits, the inserted line is automatically removed
+5. `:ManimRestart` reinserts the marker before restarting, so the restarted session behaves like the one it replaced
+
 ### Commands
 
-| Command               | Description                       |
-| --------------------- | --------------------------------- |
-| `:ManimStart [scene]` | Start interactive manimgl session |
-| `:ManimStop`          | Stop the current session          |
-| `:ManimRestart`       | Restart session with same scene   |
-| `:ManimFocus`         | Focus the terminal window         |
-| `:ManimRunLine`       | Run current line                  |
-| `:ManimRunSelection`  | Run visual selection              |
-| `:ManimSend {text}`   | Send arbitrary text to session    |
-| `:ManimWatch [scene]` | Start file watcher                |
-| `:ManimStopWatch`     | Stop file watcher                 |
+| Command               | Description                                     |
+| --------------------- | ------------------------------------------------ |
+| `:ManimStart [scene]` | Start interactive manimgl session                |
+| `:ManimStop`          | Stop the current session                         |
+| `:ManimRestart`       | Restart session with same scene                  |
+| `:ManimFocus`         | Focus the terminal window                        |
+| `:ManimRunLine`       | Run current line                                 |
+| `:ManimRunSelection`  | Run visual selection                             |
+| `:ManimSend {text}`   | Send arbitrary text to session                   |
+| `:ManimEmbed [scene]` | Insert self.embed() at cursor and start session  |
+| `:ManimWatch [scene]` | Start file watcher                               |
+| `:ManimStopWatch`     | Stop file watcher                                |
 
 ### Default Keymaps
 
-| Mode | Key          | Action               |
-| ---- | ------------ | -------------------- |
-| n    | `<leader>mo` | Start Manim session  |
-| n    | `<leader>mc` | Stop Manim session   |
-| n    | `<leader>mr` | Run current line     |
-| v    | `<leader>mr` | Run visual selection |
-| n    | `<leader>mf` | Focus terminal       |
-| n    | `<leader>mw` | Start file watcher   |
-| n    | `<leader>ms` | Stop file watcher    |
+| Mode | Key          | Action                                |
+| ---- | ------------ | -------------------------------------- |
+| n    | `<leader>mo` | Start Manim session                   |
+| n    | `<leader>mc` | Stop Manim session                    |
+| n    | `<leader>mr` | Run current line                      |
+| v    | `<leader>mr` | Run visual selection                  |
+| n    | `<leader>mf` | Focus terminal                        |
+| n    | `<leader>me` | Insert self.embed() and start session |
+| n    | `<leader>mw` | Start file watcher                    |
+| n    | `<leader>ms` | Stop file watcher                     |
 
 ## Health Check
 

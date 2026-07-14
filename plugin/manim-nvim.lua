@@ -58,6 +58,11 @@ local function create_commands()
 		require("manim-nvim").send_to_terminal(opts.args)
 	end, { nargs = "+", desc = "Send text to Manim session" })
 
+	cmd("ManimEmbed", function(opts)
+		local scene = opts.args ~= "" and opts.args or nil
+		require("manim-nvim").embed_and_start(nil, scene)
+	end, { nargs = "?", desc = "Insert self.embed() at cursor and start manimgl session" })
+
 	-- Watcher commands
 	cmd("ManimWatch", function(opts)
 		local scene = opts.args ~= "" and opts.args or nil

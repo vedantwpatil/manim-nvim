@@ -36,6 +36,7 @@ local is_setup = false
 ---    focus_terminal = '<leader>mf',
 ---    start_watcher = '<leader>mw',
 ---    stop_watcher = '<leader>ms',
+---    embed = '<leader>me',
 ---  },
 ---})
 ---@usage ]]
@@ -89,6 +90,11 @@ function M._setup_keymaps()
 
 	if keymaps.focus_terminal then
 		vim.keymap.set("n", keymaps.focus_terminal, terminal.focus_terminal, { desc = "[Manim] Focus terminal" })
+	end
+
+	if keymaps.embed then
+		vim.keymap.set("n", keymaps.embed, terminal.embed_and_start,
+			{ desc = "[Manim] Insert self.embed() and start session" })
 	end
 
 	-- Watcher keymaps (only if plenary is available)
@@ -152,6 +158,14 @@ end
 ---@return boolean success
 function M.run_selection()
 	return require("manim-nvim.terminal").run_selection()
+end
+
+---Insert self.embed() before cursor line, start manimgl session, and auto-remove on exit
+---@param file string? File path (defaults to current buffer)
+---@param scene string? Scene name (prompts if not provided)
+---@return boolean success
+function M.embed_and_start(file, scene)
+	return require("manim-nvim.terminal").embed_and_start(file, scene)
 end
 
 ---Start file watcher

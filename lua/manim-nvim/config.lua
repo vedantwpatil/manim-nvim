@@ -13,6 +13,7 @@
 ---@field focus_terminal string|false Keymap to focus terminal
 ---@field start_watcher string|false Keymap to start file watcher
 ---@field stop_watcher string|false Keymap to stop file watcher
+---@field embed string|false Keymap to insert self.embed() and start session
 
 local M = {}
 
@@ -30,6 +31,7 @@ M.defaults = {
 		focus_terminal = "<leader>mf",
 		start_watcher = "<leader>mw",
 		stop_watcher = "<leader>ms",
+		embed = "<leader>me",
 	},
 }
 
