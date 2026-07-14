@@ -4,6 +4,7 @@
 local M = {}
 
 local Job = require("plenary.job")
+local config = require("manim-nvim.config")
 
 ---@type Job|nil
 local watcher_job = nil
@@ -45,7 +46,9 @@ function M.start(file, scene)
 		return false
 	end
 
-	local cmd = string.format("echo %s | entr -c manim %s %s -pqk", file, file, scene)
+	local cfg = config.get()
+	local flags = cfg.default_flags ~= "" and (" " .. cfg.default_flags) or ""
+	local cmd = string.format("echo %s | entr -c %s %s %s -pqk%s", file, cfg.manim_cmd, file, scene, flags)
 
 	watcher_job = Job:new({
 		command = "bash",

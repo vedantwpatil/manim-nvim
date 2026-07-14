@@ -105,6 +105,17 @@ function M.start_session(file, scene)
 
 	state.terminal.bufnr = vim.api.nvim_get_current_buf()
 
+	-- Reset state if buffer is wiped externally (e.g. :bwipeout)
+	vim.api.nvim_create_autocmd("BufWipeout", {
+		buffer = state.terminal.bufnr,
+		once = true,
+		callback = function()
+			state.terminal.chan_id = nil
+			state.terminal.bufnr = nil
+			state.terminal.win_id = nil
+		end,
+	})
+
 	-- Set buffer options for terminal
 	vim.bo[state.terminal.bufnr].buflisted = false
 	vim.api.nvim_buf_set_name(state.terminal.bufnr, "manim://" .. scene)
