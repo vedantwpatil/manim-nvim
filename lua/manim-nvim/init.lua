@@ -6,6 +6,8 @@
 ---Features:
 ---- Interactive terminal session with manimgl
 ---- Send code from editor to running session
+---- Checkpoint-paste a line/selection into the embed shell
+---- Reload the running scene in place (no process restart)
 ---- File watcher for automatic recompilation
 ---
 ---Quick start:
@@ -37,6 +39,11 @@ local is_setup = false
 ---    start_watcher = '<leader>mw',
 ---    stop_watcher = '<leader>ms',
 ---    embed = '<leader>me',
+---    checkpoint_paste = '<leader>mp',
+---    checkpoint_paste_selection = '<leader>mp',
+---    reload = '<leader>ml',
+---    capture_frame = '<leader>mv',
+---    render = '<leader>mR',
 ---  },
 ---})
 ---@usage ]]
@@ -95,6 +102,34 @@ function M._setup_keymaps()
 	if keymaps.embed then
 		vim.keymap.set("n", keymaps.embed, terminal.embed_and_start,
 			{ desc = "[Manim] Insert self.embed() and start session" })
+	end
+
+	if keymaps.checkpoint_paste then
+		vim.keymap.set("n", keymaps.checkpoint_paste, terminal.checkpoint_paste_line,
+			{ desc = "[Manim] Checkpoint-paste current line" })
+	end
+
+	if keymaps.checkpoint_paste_selection then
+		vim.keymap.set("v", keymaps.checkpoint_paste_selection, function()
+			-- Exit visual mode first so '<,'> marks are set, matching run_selection
+			vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "x", false)
+			terminal.checkpoint_paste_selection()
+		end, { desc = "[Manim] Checkpoint-paste selection" })
+	end
+
+	if keymaps.reload then
+		vim.keymap.set("n", keymaps.reload, terminal.reload_scene, { desc = "[Manim] Reload scene in place" })
+	end
+
+	if keymaps.capture_frame then
+		vim.keymap.set("n", keymaps.capture_frame, terminal.capture_frame,
+			{ desc = "[Manim] Copy camera orientation to clipboard" })
+	end
+
+	if keymaps.render then
+		vim.keymap.set("n", keymaps.render, function()
+			terminal.render_scene()
+		end, { desc = "[Manim] Render scene to video file" })
 	end
 
 	-- Watcher keymaps (only if plenary is available)
@@ -158,6 +193,45 @@ end
 ---@return boolean success
 function M.run_selection()
 	return require("manim-nvim.terminal").run_selection()
+end
+
+---Checkpoint-paste current line: copy it to the clipboard and run
+---checkpoint_paste() in the running self.embed() shell (manimgl only)
+---@return boolean success
+function M.checkpoint_paste_line()
+	return require("manim-nvim.terminal").checkpoint_paste_line()
+end
+
+---Checkpoint-paste visual selection: copy it to the clipboard and run
+---checkpoint_paste() in the running self.embed() shell (manimgl only)
+---@return boolean success
+function M.checkpoint_paste_selection()
+	return require("manim-nvim.terminal").checkpoint_paste_selection()
+end
+
+---Reload the running scene in place (manimgl only): re-imports the scene
+---file and re-runs construct() in the same process, keeping the GL window
+---and IPython shell alive, instead of a full process restart.
+---@return boolean success
+function M.reload_scene()
+	return require("manim-nvim.terminal").reload_scene()
+end
+
+---Copy the running scene's current camera orientation to the clipboard as a
+---frame.reorient(...) call, ready to paste into the scene file (manimgl only).
+---@return boolean success
+function M.capture_frame()
+	return require("manim-nvim.terminal").capture_frame()
+end
+
+---Render the scene to a final video file: a one-shot manimgl invocation
+---(--prerun --finder -w), separate from the interactive embed session.
+---@param file string? File path (defaults to current buffer)
+---@param scene string? Scene name (defaults to the active session's scene, else prompts)
+---@param extra_flags string? Overrides config.default_flags when given
+---@return boolean success
+function M.render_scene(file, scene, extra_flags)
+	return require("manim-nvim.terminal").render_scene(file, scene, extra_flags)
 end
 
 ---Insert self.embed() before cursor line, start manimgl session, and auto-remove on exit

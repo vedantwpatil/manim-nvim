@@ -14,6 +14,11 @@
 ---@field start_watcher string|false Keymap to start file watcher
 ---@field stop_watcher string|false Keymap to stop file watcher
 ---@field embed string|false Keymap to insert self.embed() and start session
+---@field checkpoint_paste string|false Keymap to checkpoint-paste current line
+---@field checkpoint_paste_selection string|false Keymap to checkpoint-paste visual selection
+---@field reload string|false Keymap to reload the running scene in place
+---@field capture_frame string|false Keymap to copy camera orientation as frame.reorient(...)
+---@field render string|false Keymap to render the scene to a final video file
 
 local M = {}
 
@@ -32,6 +37,11 @@ M.defaults = {
 		start_watcher = "<leader>mw",
 		stop_watcher = "<leader>ms",
 		embed = "<leader>me",
+		checkpoint_paste = "<leader>mp",
+		checkpoint_paste_selection = "<leader>mp",
+		reload = "<leader>ml",
+		capture_frame = "<leader>mv",
+		render = "<leader>mR",
 	},
 }
 

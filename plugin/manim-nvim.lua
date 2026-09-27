@@ -63,6 +63,27 @@ local function create_commands()
 		require("manim-nvim").embed_and_start(nil, scene)
 	end, { nargs = "?", desc = "Insert self.embed() at cursor and start manimgl session" })
 
+	cmd("ManimCheckpointPaste", function()
+		require("manim-nvim").checkpoint_paste_line()
+	end, { desc = "Checkpoint-paste current line into the embed shell" })
+
+	cmd("ManimCheckpointPasteSelection", function()
+		require("manim-nvim").checkpoint_paste_selection()
+	end, { range = true, desc = "Checkpoint-paste visual selection into the embed shell" })
+
+	cmd("ManimReload", function()
+		require("manim-nvim").reload_scene()
+	end, { desc = "Reload the running scene in place (manimgl only)" })
+
+	cmd("ManimCaptureFrame", function()
+		require("manim-nvim").capture_frame()
+	end, { desc = "Copy the current camera orientation to the clipboard as frame.reorient(...)" })
+
+	cmd("ManimRender", function(opts)
+		local scene = opts.args ~= "" and opts.args or nil
+		require("manim-nvim").render_scene(nil, scene)
+	end, { nargs = "?", desc = "Render the scene to a final video file (manimgl only)" })
+
 	-- Watcher commands
 	cmd("ManimWatch", function(opts)
 		local scene = opts.args ~= "" and opts.args or nil

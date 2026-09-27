@@ -39,6 +39,22 @@ function M.check()
 			{ "Install: brew install entr  /  apt install entr", "File watcher feature will be unavailable" }
 		)
 	end
+
+	-- system clipboard (required for checkpoint_paste, which reads it via
+	-- pyperclip on the manimgl side)
+	if vim.fn.has("clipboard") == 1 and (vim.g.clipboard or vim.fn.executable("pbcopy") == 1
+			or vim.fn.executable("xclip") == 1 or vim.fn.executable("xsel") == 1
+			or vim.fn.executable("wl-copy") == 1) then
+		h.ok("system clipboard provider found (checkpoint_paste enabled)")
+	else
+		h.warn(
+			"no system clipboard provider found",
+			{
+				"Install pbcopy (macOS, built-in) / xclip / xsel / wl-clipboard (Linux)",
+				"ManimCheckpointPaste will send stale clipboard content without one",
+			}
+		)
+	end
 end
 
 return M
